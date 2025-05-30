@@ -1,0 +1,16 @@
+# Core
+streamlit==1.24.0
+python-dotenv==1.0.0
+SQLAlchemy==2.0.15
+pandas==2.0.2
+
+# RAG / PDF
+chromadb==0.4.0
+sentence-transformers==2.2.2
+PyPDF2==3.0.0
+
+# Azure OpenAI
+openai>=0.27.0
+
+# Optional PostgreSQL support
+# psycopg2-binary

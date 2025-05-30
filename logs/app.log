@@ -1,0 +1,1 @@
+2025-05-30 13:03:20,421 - httpx - INFO - HTTP Request: POST https://cirruspl-openai-test-abc.openai.azure.com/openai/deployments/gpt-4o-mini/chat/completions?api-version=2025-01-01-preview "HTTP/1.1 403 Forbidden"
