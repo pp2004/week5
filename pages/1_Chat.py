@@ -30,8 +30,8 @@ def main():
     initialize_session_state()
     azure_config = setup_sidebar_config()
 
+    # Sidebar: Temperature, max_tokens, and Clear Chat
     st.sidebar.header("🎛️ Chat Settings")
-    # Temperature slider
     temperature = st.sidebar.slider(
         "Temperature",
         min_value=0.0,
@@ -56,7 +56,7 @@ def main():
     # Clear chat button
     if st.sidebar.button("🗑️ Clear Chat"):
         st.session_state.chat_history = []
-        st.stop()  # halt this run so Streamlit will rerun fresh
+        st.stop()   # immediately halt this run so Streamlit rewrites everything fresh
 
     # ─── PDF Upload & RAG ────────────────────────────────────────────────────────
     st.sidebar.header("📄 PDF Upload & RAG")
@@ -116,14 +116,15 @@ def main():
     for message in st.session_state.chat_history:
         role = message["role"]
         content = message["content"]
+        # If your installed Streamlit ≥ 1.18, you can do st.chat_message(role)
+        # But if chat_message is missing, fallback to st.markdown:
         try:
-            # Newer Streamlit (>=1.18) supports chat_message
             with st.chat_message(role):
                 st.write(content)
                 if role == "assistant" and message.get("has_context"):
                     st.caption("📄 Response includes PDF context")
         except AttributeError:
-            # Fallback for older Streamlit: simple markdown
+            # Fallback for older Streamlit—no chat bubbles
             if role == "user":
                 st.markdown(f"**You:** {content}")
             else:
@@ -131,17 +132,17 @@ def main():
             if role == "assistant" and message.get("has_context"):
                 st.caption("📄 Response includes PDF context")
 
-    # ─── Chat input (form-based fallback) ────────────────────────────────────────
+    # ─── Chat input (form‐based fallback) ────────────────────────────────────────
     with st.form("chat_input_form", clear_on_submit=True):
         prompt = st.text_input("Type your message here...", key="chat_user_input")
         submitted = st.form_submit_button("Send")
 
     if submitted and prompt:
-        # 1) Record user message
+        # 1) Record user message in session history
         user_msg = {"role": "user", "content": prompt}
         st.session_state.chat_history.append(user_msg)
 
-        # Render the user message
+        # Render the user message to the UI:
         try:
             with st.chat_message("user"):
                 st.write(prompt)
@@ -154,18 +155,19 @@ def main():
             pdf_context = search_pdf_context(prompt)
         has_pdf_context = len(pdf_context) > 0
 
-        # 3) Call ask_gpt with the full history and azure_config
+        # 3) Call ask_gpt with the full session history + azure_config
+        #    We must MATCH the exact return signature from chat_engine.ask_gpt:
         try:
-            # ask_gpt returns (response:str, tokens_used:int, success:bool)
             response, tokens_used, success = ask_gpt(
-                st.session_state.chat_history,
-                azure_config,
+                st.session_state.chat_history,   # entire message history
+                azure_config,                    # azure_config dict
                 pdf_context=pdf_context,
                 temperature=st.session_state.temperature,
                 max_tokens=st.session_state.max_tokens
             )
 
-            if not success or not response:
+            # If ask_gpt returns success == False, show an error
+            if not success or response is None:
                 st.error("❌ Failed to get a valid response from Azure OpenAI.")
                 return
 
@@ -180,7 +182,7 @@ def main():
                 if has_pdf_context:
                     st.caption("📄 Response includes PDF context")
 
-            # 5) Append that assistant message to history & log
+            # 5) Append that assistant message to history & log into DB
             assistant_msg = {
                 "role": "assistant",
                 "content": response,
