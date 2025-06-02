@@ -12,8 +12,7 @@ from utils import (
     get_user_id,
     validate_pdf_file,
     format_file_size,
-    show_error_with_details,
-    show_success_message
+    show_error_with_details
 )
 
 # ─── Page configuration ─────────────────────────────────────────────────────────
@@ -57,7 +56,7 @@ def main():
     # Clear chat button
     if st.sidebar.button("🗑️ Clear Chat"):
         st.session_state.chat_history = []
-        st.experimental_rerun()
+        st.stop()  # halt this run so Streamlit will rerun fresh
 
     # ─── PDF Upload & RAG ────────────────────────────────────────────────────────
     st.sidebar.header("📄 PDF Upload & RAG")
@@ -71,9 +70,9 @@ def main():
         if not is_valid:
             st.sidebar.error(error_msg)
         else:
-            # New file? show filename & size
-            if (not st.session_state.pdf_processed
-                    or st.session_state.pdf_filename != uploaded_file.name):
+            # If this is a newly selected PDF:
+            if (not st.session_state.pdf_processed or
+                st.session_state.pdf_filename != uploaded_file.name):
                 st.sidebar.info(f"📄 {uploaded_file.name}")
                 st.sidebar.info(f"Size: {format_file_size(uploaded_file.size)}")
                 if st.sidebar.button("🔄 Process PDF"):
@@ -103,21 +102,33 @@ def main():
         st.info("Enter your Azure OpenAI endpoint, API key, deployment name, and API version in the sidebar form.")
         return
 
-    is_valid_cfg, error_msg = validate_azure_config(
+    valid_cfg, err_msg = validate_azure_config(
         azure_config["endpoint"],
         azure_config["api_key"],
         azure_config["deployment_name"],
         azure_config["api_version"]
     )
-    if not is_valid_cfg:
-        st.error(f"❌ Configuration Error: {error_msg}")
+    if not valid_cfg:
+        st.error(f"❌ Configuration Error: {err_msg}")
         return
 
     # ─── Display existing chat history ──────────────────────────────────────────
     for message in st.session_state.chat_history:
-        with st.chat_message(message["role"]):
-            st.write(message["content"])
-            if message["role"] == "assistant" and message.get("has_context"):
+        role = message["role"]
+        content = message["content"]
+        try:
+            # Newer Streamlit (>=1.18) supports chat_message
+            with st.chat_message(role):
+                st.write(content)
+                if role == "assistant" and message.get("has_context"):
+                    st.caption("📄 Response includes PDF context")
+        except AttributeError:
+            # Fallback for older Streamlit: simple markdown
+            if role == "user":
+                st.markdown(f"**You:** {content}")
+            else:
+                st.markdown(f"**Assistant:** {content}")
+            if role == "assistant" and message.get("has_context"):
                 st.caption("📄 Response includes PDF context")
 
     # ─── Chat input (form-based fallback) ────────────────────────────────────────
@@ -127,45 +138,55 @@ def main():
 
     if submitted and prompt:
         # 1) Record user message
-        user_message = {"role": "user", "content": prompt}
-        st.session_state.chat_history.append(user_message)
-        with st.chat_message("user"):
-            st.write(prompt)
+        user_msg = {"role": "user", "content": prompt}
+        st.session_state.chat_history.append(user_msg)
 
-        # 2) Retrieve PDF context if available
+        # Render the user message
+        try:
+            with st.chat_message("user"):
+                st.write(prompt)
+        except AttributeError:
+            st.markdown(f"**You:** {prompt}")
+
+        # 2) Gather PDF context if available
         pdf_context = []
         if st.session_state.pdf_processed:
             pdf_context = search_pdf_context(prompt)
-
         has_pdf_context = len(pdf_context) > 0
 
-        # 3) Ask GPT with full history and azure_config
+        # 3) Call ask_gpt with the full history and azure_config
         try:
+            # ask_gpt returns (response:str, tokens_used:int, success:bool)
             response, tokens_used, success = ask_gpt(
-                st.session_state.chat_history,   # full message history
-                azure_config,                    # azure settings dict
+                st.session_state.chat_history,
+                azure_config,
                 pdf_context=pdf_context,
                 temperature=st.session_state.temperature,
                 max_tokens=st.session_state.max_tokens
             )
 
-            if not success:
-                st.error("❌ Failed to get response from Azure OpenAI.")
+            if not success or not response:
+                st.error("❌ Failed to get a valid response from Azure OpenAI.")
                 return
 
-            # 4) Show assistant reply
-            with st.chat_message("assistant"):
-                st.write(response)
+            # 4) Render the assistant’s response
+            try:
+                with st.chat_message("assistant"):
+                    st.write(response)
+                    if has_pdf_context:
+                        st.caption("📄 Response includes PDF context")
+            except AttributeError:
+                st.markdown(f"**Assistant:** {response}")
                 if has_pdf_context:
                     st.caption("📄 Response includes PDF context")
 
-            # 5) Append assistant reply to history & log
-            assistant_message = {
+            # 5) Append that assistant message to history & log
+            assistant_msg = {
                 "role": "assistant",
                 "content": response,
                 "has_context": has_pdf_context
             }
-            st.session_state.chat_history.append(assistant_message)
+            st.session_state.chat_history.append(assistant_msg)
 
             log_message(
                 user_id=get_user_id(),
@@ -178,7 +199,7 @@ def main():
                 has_pdf_context=has_pdf_context
             )
 
-            # 6) Show token usage
+            # 6) Show token usage below
             st.caption(f"🔢 Tokens used: {tokens_used}")
 
         except Exception as e:
@@ -192,7 +213,8 @@ def main():
     if st.session_state.chat_history:
         with st.expander("📊 Session Info"):
             st.write(f"**Messages in conversation:** {len(st.session_state.chat_history)}")
-            st.write(f"**PDF context:** {'✅ Available' if st.session_state.pdf_processed else '❌ No PDF'}")
+            pdf_flag = "✅ Available" if st.session_state.pdf_processed else "❌ No PDF"
+            st.write(f"**PDF context:** {pdf_flag}")
             st.write(f"**Temperature:** {st.session_state.temperature}")
             st.write(f"**Max Tokens:** {st.session_state.max_tokens}")
 
