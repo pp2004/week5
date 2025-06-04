@@ -1,10 +1,11 @@
 """
+chat_engine.py
+
 Chat engine for Azure GPT-4o Chat Application
 Handles Azure OpenAI API calls, PDF processing, and RAG functionality
 """
 
 import os
-import time
 import hashlib
 import streamlit as st
 from typing import List, Dict, Optional, Tuple
@@ -16,14 +17,15 @@ try:
     AZURE_AVAILABLE = True
 except ImportError:
     AZURE_AVAILABLE = False
-    st.error("Azure OpenAI libraries not available. Please install openai.")
+    # We do NOT call st.error() at import time (this can break Streamlit's ordering);
+    # we will raise or show errors only when the user actually tries to call Azure.
+
 
 # PDF and RAG imports - lazy loaded to avoid startup errors
-def lazy_import_rag_dependencies():
-    """Lazy import RAG dependencies to avoid startup errors"""
-    
+def lazy_import_rag_dependencies() -> bool:
+    """Lazy import RAG dependencies to avoid startup errors."""
     global PyPDF2, chromadb, SentenceTransformer
-    
+
     try:
         import PyPDF2
         import chromadb
@@ -33,29 +35,34 @@ def lazy_import_rag_dependencies():
         st.error(f"RAG dependencies not available: {str(e)}")
         return False
 
+
 class AzureGPTClient:
     """Azure OpenAI GPT client for chat completions"""
-    
-    def __init__(self, endpoint: str, api_key: str, deployment_name: str, api_version: str):
+
+    def __init__(
+        self,
+        endpoint: str,
+        api_key: str,
+        deployment_name: str,
+        api_version: str
+    ):
         """
-        Initialize Azure OpenAI client
-        
+        Initialize Azure OpenAI client.
+
         Args:
-            endpoint: Azure OpenAI endpoint
-            api_key: API key
-            deployment_name: Deployment name
-            api_version: API version
+            endpoint: Azure OpenAI endpoint (e.g. https://myresource.openai.azure.com/)
+            api_key: Azure OpenAI API key
+            deployment_name: Name of the deployed model (e.g. "gpt-4o-deployment")
+            api_version: Azure OpenAI API version (e.g. "2023-05-15")
         """
-        
         if not AZURE_AVAILABLE:
-            raise ImportError("Azure OpenAI libraries not available")
-        
+            raise ImportError("Azure OpenAI libraries not installed. Please `pip install openai`.")
+
         self.endpoint = endpoint.rstrip('/')
         self.api_key = api_key
         self.deployment_name = deployment_name
         self.api_version = api_version
-        
-        # Initialize client
+
         try:
             self.client = AzureOpenAI(
                 azure_endpoint=self.endpoint,
@@ -64,7 +71,7 @@ class AzureGPTClient:
             )
         except Exception as e:
             raise ConnectionError(f"Failed to initialize Azure OpenAI client: {str(e)}")
-    
+
     def get_chat_completion(
         self,
         messages: List[Dict[str, str]],
@@ -73,18 +80,20 @@ class AzureGPTClient:
         stream: bool = False
     ) -> Tuple[str, int]:
         """
-        Get chat completion from Azure OpenAI
-        
+        Get chat completion from Azure OpenAI.
+
         Args:
-            messages: List of message dictionaries
-            temperature: Temperature for response
-            max_tokens: Maximum tokens for response
-            stream: Whether to stream response
-        
+            messages: List of message dicts, e.g. [{"role":"system","content":"..."}, ...]
+            temperature: Sampling temperature
+            max_tokens: Maximum tokens to generate
+            stream: If True, returns partial chunks; if False, returns full content
+
         Returns:
-            Tuple of (response_content, tokens_used)
+            (response_content: str, tokens_used: int)
+
+        Raises:
+            Exception if the API call fails.
         """
-        
         try:
             response = self.client.chat.completions.create(
                 model=self.deployment_name,
@@ -93,180 +102,157 @@ class AzureGPTClient:
                 max_tokens=max_tokens,
                 stream=stream
             )
-            
+
             if stream:
-                # Handle streaming response
-                content = ""
+                # STREAMING: collect all partial deltas into a single string
+                full_content = ""
                 for chunk in response:
-                    if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
-                        content += chunk.choices[0].delta.content
-                        yield chunk.choices[0].delta.content
-                
-                # Estimate token usage for streaming
-                tokens_used = len(content.split()) * 1.3  # Rough estimation
-                return content, int(tokens_used)
+                    # each chunk.choices[0].delta.content may be a partial string
+                    delta = chunk.choices[0].delta
+                    if delta and getattr(delta, "content", None):
+                        full_content += delta.content
+                # Rough token‐usage estimate
+                tokens_used = int(len(full_content.split()) * 1.3)
+                return full_content, tokens_used
+
             else:
-                # Handle non-streaming response
-                content = response.choices[0].message.content
+                # NON‐STREAMING: just read the final choices[0].message.content
+                full_message = response.choices[0].message.content
                 tokens_used = response.usage.total_tokens if response.usage else 0
-                
-                return content, tokens_used
-                
+                return full_message, tokens_used
+
         except Exception as e:
+            # Bubble up as a generic Exception
             raise Exception(f"Azure OpenAI API error: {str(e)}")
+
 
 class PDFProcessor:
     """PDF processing and RAG functionality"""
-    
+
     def __init__(self):
-        """Initialize PDF processor"""
-        
+        """Initialize PDF processor (lazy RAG)."""
         self.chroma_client = None
         self.collection = None
         self.embedder = None
         self.rag_available = False
-    
+
     def initialize_rag(self) -> bool:
         """
-        Initialize RAG dependencies (lazy loading)
-        
-        Returns:
-            Boolean indicating success
+        Initialize RAG dependencies (PyPDF2, chromadb, SentenceTransformer).
+
+        Returns True if successful, False otherwise.
         """
-        
         if self.rag_available:
             return True
-        
+
         if not lazy_import_rag_dependencies():
             return False
-        
+
         try:
-            # Initialize ChromaDB client
+            # Create persistent ChromaDB folder “./chroma_db”
             self.chroma_client = chromadb.PersistentClient(path="./chroma_db")
-            
-            # Get or create collection
             self.collection = self.chroma_client.get_or_create_collection(
                 name="pdf_documents",
                 metadata={"hnsw:space": "cosine"}
             )
-            
-            # Initialize sentence transformer
             self.embedder = SentenceTransformer('all-MiniLM-L6-v2')
-            
             self.rag_available = True
             return True
-            
+
         except Exception as e:
             st.error(f"Failed to initialize RAG: {str(e)}")
             return False
-    
+
     def extract_text_from_pdf(self, pdf_file) -> str:
         """
-        Extract text from uploaded PDF file
-        
+        Extract all text from a Streamlit-uploaded PDF.
+
         Args:
-            pdf_file: Streamlit uploaded file object
-        
+            pdf_file: Streamlit file object.
+
         Returns:
-            Extracted text content
+            The entire text (all pages concatenated).
+
+        Raises:
+            Exception if extraction fails.
         """
-        
         if not self.initialize_rag():
-            raise Exception("RAG dependencies not available")
-        
+            raise Exception("RAG dependencies not available; cannot extract text.")
+
         try:
             reader = PyPDF2.PdfReader(pdf_file)
             text = ""
-            
             for page in reader.pages:
                 text += page.extract_text() + "\n"
-            
             return text.strip()
-            
+
         except Exception as e:
             raise Exception(f"Failed to extract text from PDF: {str(e)}")
-    
+
     def chunk_text(self, text: str, chunk_size: int = 1000, overlap: int = 100) -> List[str]:
         """
-        Chunk text into smaller passages
-        
+        Break a long text into overlapping chunks (for embedding).
+
         Args:
-            text: Input text
-            chunk_size: Size of each chunk
-            overlap: Overlap between chunks
-        
+            text: The full text string.
+            chunk_size: Maximum characters per chunk.
+            overlap: Characters to overlap between chunks.
+
         Returns:
-            List of text chunks
+            A list of chunk strings.
         """
-        
         if len(text) <= chunk_size:
             return [text]
-        
-        chunks = []
+
+        chunks: List[str] = []
         start = 0
-        
         while start < len(text):
             end = start + chunk_size
-            
-            # Try to break at word boundary
             if end < len(text):
-                # Find last space before end
                 last_space = text.rfind(' ', start, end)
                 if last_space > start:
                     end = last_space
-            
-            chunk = text[start:end].strip()
-            if chunk:
-                chunks.append(chunk)
-            
+
+            fragment = text[start:end].strip()
+            if fragment:
+                chunks.append(fragment)
+
             start = end - overlap
             if start >= len(text):
                 break
-        
+
         return chunks
-    
+
     def process_pdf(self, pdf_file, filename: str) -> bool:
         """
-        Process PDF file and store in vector database
-        
+        Process an uploaded PDF: extract text, chunk, embed, and store in ChromaDB.
+
         Args:
-            pdf_file: Streamlit uploaded file object
-            filename: Name of the PDF file
-        
+            pdf_file: Streamlit file object.
+            filename: The original filename (used in metadata).
+
         Returns:
-            Boolean indicating success
+            True if processing succeeded, False otherwise.
         """
-        
         if not self.initialize_rag():
             return False
-        
+
         try:
-            # Extract text
             text = self.extract_text_from_pdf(pdf_file)
-            
             if not text.strip():
-                st.error("No text could be extracted from the PDF")
+                st.error("No text could be extracted from the PDF.")
                 return False
-            
-            # Chunk text
+
             chunks = self.chunk_text(text, chunk_size=1000, overlap=100)
-            
             if not chunks:
-                st.error("No chunks could be created from the PDF text")
+                st.error("No chunks could be created from the PDF text.")
                 return False
-            
-            # Generate embeddings and store in ChromaDB
+
             progress_bar = st.progress(0)
-            
             for i, chunk in enumerate(chunks):
                 try:
-                    # Generate embedding
                     embedding = self.embedder.encode(chunk).tolist()
-                    
-                    # Create unique ID for chunk
                     chunk_id = hashlib.md5(f"{filename}_{i}_{chunk[:50]}".encode()).hexdigest()
-                    
-                    # Store in collection
                     self.collection.add(
                         embeddings=[embedding],
                         documents=[chunk],
@@ -277,73 +263,63 @@ class PDFProcessor:
                             "timestamp": datetime.now().isoformat()
                         }]
                     )
-                    
                     progress_bar.progress((i + 1) / len(chunks))
-                    
-                except Exception as e:
-                    st.warning(f"Failed to process chunk {i}: {str(e)}")
+
+                except Exception as chunk_e:
+                    st.warning(f"Failed to process chunk {i}: {str(chunk_e)}")
                     continue
-            
+
             progress_bar.empty()
-            st.success(f"Successfully processed {len(chunks)} chunks from {filename}")
+            st.success(f"Successfully processed {len(chunks)} chunks from “{filename}”.")
             return True
-            
+
         except Exception as e:
             st.error(f"Failed to process PDF: {str(e)}")
             return False
-    
+
     def search_similar_chunks(self, query: str, n_results: int = 3) -> List[str]:
         """
-        Search for similar chunks in the vector database
-        
+        Query the vector store for the top‐k chunks most similar to `query`.
+
         Args:
-            query: Search query
-            n_results: Number of results to return
-        
+            query: The user’s question or context string.
+            n_results: How many top results to return.
+
         Returns:
-            List of similar text chunks
+            A list of up to n_results text chunks. If no data or RAG not initialized, returns [].
         """
-        
         if not self.rag_available or not self.collection:
             return []
-        
+
         try:
-            # Generate query embedding
             query_embedding = self.embedder.encode(query).tolist()
-            
-            # Search in collection
             results = self.collection.query(
                 query_embeddings=[query_embedding],
                 n_results=n_results
             )
-            
-            # Extract documents
-            if results and results['documents']:
+            # `results['documents'][0]` is a list of up to n_results chunk strings
+            if results and results.get('documents'):
                 return results['documents'][0]
-            
             return []
-            
+
         except Exception as e:
             st.error(f"Failed to search similar chunks: {str(e)}")
             return []
-    
+
     def get_collection_stats(self) -> Dict:
         """
-        Get statistics about the vector collection
-        
+        Return some basic stats about the current ChromaDB collection.
+
         Returns:
-            Dictionary with collection statistics
+            A dict: { "count": <int>, "error": <optional str> }
         """
-        
         if not self.rag_available or not self.collection:
             return {"count": 0, "error": "RAG not initialized"}
-        
         try:
-            count = self.collection.count()
-            return {"count": count}
-            
+            return {"count": self.collection.count()}
         except Exception as e:
             return {"count": 0, "error": str(e)}
+
 
 def ask_gpt(
     messages: List[Dict[str, str]],
@@ -354,94 +330,122 @@ def ask_gpt(
     stream: bool = False
 ) -> Tuple[str, int, bool]:
     """
-    Ask GPT with optional PDF context
-    
+    Ask GPT (with optional PDF context) and ALWAYS return exactly three values:
+      (response_content: str, tokens_used: int, success: bool).
+
     Args:
-        messages: Conversation messages
-        azure_config: Azure OpenAI configuration
-        temperature: Temperature setting
-        max_tokens: Max tokens setting
-        pdf_context: Optional PDF context chunks
-        stream: Whether to stream response
-    
+        messages: Existing conversation history.
+        azure_config: {
+          "endpoint": <str>,
+          "api_key": <str>,
+          "deployment_name": <str>,
+          "api_version": <str>
+        }
+        temperature: Sampling temperature.
+        max_tokens: Max tokens to allow.
+        pdf_context: Optional list of relevant PDF chunks.
+        stream: Whether to use streaming. (We will ignore partial yields and just collect the full string.)
+
     Returns:
-        Tuple of (response, tokens_used, success)
+        A 3‐tuple: (response str, tokens_used int, success bool).
+        If anything fails, `success` is False and the first element is an error message.
     """
-    
     try:
-        # Initialize Azure client
+        # 1) Initialize Azure client
         client = AzureGPTClient(
-            endpoint=azure_config['endpoint'],
-            api_key=azure_config['api_key'],
-            deployment_name=azure_config['deployment_name'],
-            api_version=azure_config['api_version']
+            endpoint=azure_config["endpoint"],
+            api_key=azure_config["api_key"],
+            deployment_name=azure_config["deployment_name"],
+            api_version=azure_config["api_version"]
         )
-        
-        # Prepare messages with PDF context
+
+        # 2) Build the “enhanced_messages” list, inserting PDF context as a system message if present
         enhanced_messages = messages.copy()
-        
         if pdf_context:
-            # Add PDF context as system message
             context_text = "\n\n".join(pdf_context)
             system_message = {
                 "role": "system",
-                "content": f"You are an AI assistant with access to relevant document context. Use the following context to help answer the user's question:\n\n{context_text}\n\nIf the context is relevant to the user's question, incorporate it into your response. If not, provide a helpful response based on your general knowledge."
+                "content": (
+                    "You are an AI assistant with access to relevant document context. "
+                    "Use the following context to help answer the user's question:\n\n"
+                    f"{context_text}\n\n"
+                    "If the context is relevant, incorporate it; otherwise answer from your general knowledge."
+                )
             }
-            
-            # Insert system message at the beginning or update existing one
-            if enhanced_messages and enhanced_messages[0]["role"] == "system":
+            if enhanced_messages and enhanced_messages[0].get("role") == "system":
                 enhanced_messages[0] = system_message
             else:
                 enhanced_messages.insert(0, system_message)
-        
-        # Get response
+
+        # 3) Call get_chat_completion and ALWAYS collect into a single string
         if stream:
-            return client.get_chat_completion(enhanced_messages, temperature, max_tokens, stream=True)
+            # Even if stream=True, we collect everything and return it at once
+            full_content = ""
+            tokens_used = 0
+            # get_chat_completion yields partial chunks when stream=True
+            for delta_chunk in client.get_chat_completion(
+                enhanced_messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                stream=True
+            ):
+                full_content += delta_chunk
+            # Estimate token usage
+            tokens_used = int(len(full_content.split()) * 1.3)
+            return full_content, tokens_used, True
+
         else:
-            response, tokens = client.get_chat_completion(enhanced_messages, temperature, max_tokens)
-            return response, tokens, True
-            
+            # Non‐streaming path: get a 2‐tuple (content, tokens) back
+            content, tokens_used = client.get_chat_completion(
+                enhanced_messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                stream=False
+            )
+            return content, tokens_used, True
+
     except Exception as e:
         error_msg = f"Failed to get GPT response: {str(e)}"
         st.error(error_msg)
         return error_msg, 0, False
 
-# Global PDF processor instance
+
+# -----------------------------------------------------------------------------
+# Instantiate a single global PDFProcessor so that we don’t reload models each time
 pdf_processor = PDFProcessor()
+
 
 def process_uploaded_pdf(uploaded_file) -> bool:
     """
-    Process uploaded PDF file
-    
+    Wrapper around pdf_processor.process_pdf(...) for the Streamlit front‐end.
+
     Args:
-        uploaded_file: Streamlit uploaded file
-    
+        uploaded_file: Streamlit PDF file.
+
     Returns:
-        Boolean indicating success
+        True if successful, False otherwise.
     """
-    
     return pdf_processor.process_pdf(uploaded_file, uploaded_file.name)
+
 
 def search_pdf_context(query: str) -> List[str]:
     """
-    Search for relevant PDF context
-    
+    Wrapper around pdf_processor.search_similar_chunks(...).
+
     Args:
-        query: Search query
-    
+        query: The user’s question or context string.
+
     Returns:
-        List of relevant text chunks
+        A list of up to 3 PDF text chunks that appear most relevant.
     """
-    
     return pdf_processor.search_similar_chunks(query, n_results=3)
+
 
 def get_pdf_stats() -> Dict:
     """
-    Get PDF collection statistics
-    
-    Returns:
-        Dictionary with statistics
-    """
-    
-    return pdf_processor.get_collection_stats()
+    Wrapper around pdf_processor.get_collection_stats().
 
+    Returns:
+        A dict: {"count": <int>, "error": <optional str>}
+    """
+    return pdf_processor.get_collection_stats()

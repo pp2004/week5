@@ -195,7 +195,7 @@ def main():
                 prompt=prompt,
                 response=response,
                 tokens_used=tokens_used,
-                model_name="gpt-4o",
+                model_name="gpt-4o-mini",
                 temperature=st.session_state.temperature,
                 max_tokens=st.session_state.max_tokens,
                 has_pdf_context=has_pdf_context
