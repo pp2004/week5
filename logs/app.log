@@ -5,3 +5,75 @@
 2025-06-04 11:43:30,034 - httpx - INFO - HTTP Request: POST https://cirruspl-openai-test-abc.openai.azure.com/openai/deployments/gpt-4o-mini/chat/completions?api-version=2025-01-01-preview "HTTP/1.1 403 Forbidden"
 2025-06-04 11:46:09,808 - httpx - INFO - HTTP Request: POST https://cirruspl-openai-test-abc.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2025-01-01-preview "HTTP/1.1 403 Forbidden"
 2025-06-04 11:46:25,632 - httpx - INFO - HTTP Request: POST https://cirruspl-openai-test-abc.openai.azure.com/openai/deployments/gpt-4o-deployment/chat/completions?api-version=2025-01-01-preview "HTTP/1.1 403 Forbidden"
+2025-06-05 09:35:32,043 - httpx - INFO - HTTP Request: POST https://mudit-43747337.openai.azure.com/openai/deployments/o4-mini-4/chat/completions?api-version=2024-12-01-preview "HTTP/1.1 400 Bad Request"
+2025-06-05 09:36:13,839 - chromadb.telemetry.posthog - INFO - Anonymized telemetry enabled. See https://docs.trychroma.com/telemetry for more information.
+2025-06-05 09:36:14,271 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-06-05 09:37:42,894 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device: cpu
+2025-06-05 09:38:17,062 - httpx - INFO - HTTP Request: POST https://mudit-43747337.openai.azure.com/openai/deployments/o4-mini-4/chat/completions?api-version=2024-12-01-preview "HTTP/1.1 400 Bad Request"
+2025-06-05 09:40:25,216 - httpx - INFO - HTTP Request: POST https://mudit-43747337.openai.azure.com/openai/deployments/o4-mini-4/chat/completions?api-version=2025-01-01-preview "HTTP/1.1 200 OK"
+2025-06-05 09:40:50,919 - httpx - INFO - HTTP Request: POST https://mudit-43747337.openai.azure.com/openai/deployments/o4-mini-4/chat/completions?api-version=2025-01-01-preview "HTTP/1.1 200 OK"
+2025-06-05 09:41:02,111 - httpx - INFO - HTTP Request: POST https://mudit-43747337.openai.azure.com/openai/deployments/o4-mini-4/chat/completions?api-version=2025-01-01-preview "HTTP/1.1 200 OK"
+2025-06-05 09:41:28,193 - httpx - INFO - HTTP Request: POST https://mudit-43747337.openai.azure.com/openai/deployments/o4-mini-4/chat/completions?api-version=2025-01-01-preview "HTTP/1.1 200 OK"
+2025-06-05 09:42:30,137 - chromadb.telemetry.posthog - INFO - Anonymized telemetry enabled. See https://docs.trychroma.com/telemetry for more information.
+2025-06-05 09:42:30,177 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-06-05 09:42:30,904 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device: cpu
+2025-06-05 09:42:31,099 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 58f28f248a08560e05e3ada7250c9436
+2025-06-05 09:42:31,099 - chromadb.segment.impl.metadata.sqlite - WARNING - Insert of existing embedding ID: 58f28f248a08560e05e3ada7250c9436
+2025-06-05 09:42:31,120 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 25e7edfba33ba3a0e068c31d5677d4d9
+2025-06-05 09:42:31,121 - chromadb.segment.impl.metadata.sqlite - WARNING - Insert of existing embedding ID: 25e7edfba33ba3a0e068c31d5677d4d9
+2025-06-05 09:42:31,141 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 9ef22005e8ac5f62a334a4b7029d9718
+2025-06-05 09:42:31,141 - chromadb.segment.impl.metadata.sqlite - WARNING - Insert of existing embedding ID: 9ef22005e8ac5f62a334a4b7029d9718
+2025-06-05 09:42:31,164 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 3344a86e41b53f542b4a31f3317fe7f3
+2025-06-05 09:42:31,165 - chromadb.segment.impl.metadata.sqlite - WARNING - Insert of existing embedding ID: 3344a86e41b53f542b4a31f3317fe7f3
+2025-06-05 09:42:31,193 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: e154e45f4f9fbbf6059fa4a902748d7c
+2025-06-05 09:42:31,193 - chromadb.segment.impl.metadata.sqlite - WARNING - Insert of existing embedding ID: e154e45f4f9fbbf6059fa4a902748d7c
+2025-06-05 09:42:31,203 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 3369ab2c949165657c1fa34d48134d6a
+2025-06-05 09:42:31,203 - chromadb.segment.impl.metadata.sqlite - WARNING - Insert of existing embedding ID: 3369ab2c949165657c1fa34d48134d6a
+2025-06-05 09:42:45,688 - httpx - INFO - HTTP Request: POST https://mudit-43747337.openai.azure.com/openai/deployments/o4-mini-4/chat/completions?api-version=2025-01-01-preview "HTTP/1.1 200 OK"
+2025-06-05 09:44:00,156 - httpx - INFO - HTTP Request: POST https://mudit-43747337.openai.azure.com/openai/deployments/o4-mini-4/chat/completions?api-version=2025-01-01-preview "HTTP/1.1 200 OK"
+2025-06-05 09:48:39,282 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 58f28f248a08560e05e3ada7250c9436
+2025-06-05 09:48:39,284 - chromadb.segment.impl.metadata.sqlite - WARNING - Insert of existing embedding ID: 58f28f248a08560e05e3ada7250c9436
+2025-06-05 09:48:39,315 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 25e7edfba33ba3a0e068c31d5677d4d9
+2025-06-05 09:48:39,315 - chromadb.segment.impl.metadata.sqlite - WARNING - Insert of existing embedding ID: 25e7edfba33ba3a0e068c31d5677d4d9
+2025-06-05 09:48:39,337 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 9ef22005e8ac5f62a334a4b7029d9718
+2025-06-05 09:48:39,338 - chromadb.segment.impl.metadata.sqlite - WARNING - Insert of existing embedding ID: 9ef22005e8ac5f62a334a4b7029d9718
+2025-06-05 09:48:39,360 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 3344a86e41b53f542b4a31f3317fe7f3
+2025-06-05 09:48:39,360 - chromadb.segment.impl.metadata.sqlite - WARNING - Insert of existing embedding ID: 3344a86e41b53f542b4a31f3317fe7f3
+2025-06-05 09:48:39,384 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: e154e45f4f9fbbf6059fa4a902748d7c
+2025-06-05 09:48:39,385 - chromadb.segment.impl.metadata.sqlite - WARNING - Insert of existing embedding ID: e154e45f4f9fbbf6059fa4a902748d7c
+2025-06-05 09:48:39,395 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 3369ab2c949165657c1fa34d48134d6a
+2025-06-05 09:48:39,396 - chromadb.segment.impl.metadata.sqlite - WARNING - Insert of existing embedding ID: 3369ab2c949165657c1fa34d48134d6a
+2025-06-05 09:48:50,115 - httpx - INFO - HTTP Request: POST https://mudit-43747337.openai.azure.com/openai/deployments/o4-mini-4/chat/completions?api-version=2024-12-01-preview "HTTP/1.1 200 OK"
+2025-06-05 09:49:11,335 - httpx - INFO - HTTP Request: POST https://mudit-43747337.openai.azure.com/openai/deployments/o4-mini-4/chat/completions?api-version=2024-12-01-preview "HTTP/1.1 200 OK"
+2025-06-05 10:01:00,267 - httpx - INFO - HTTP Request: POST https://mudit-43747337.openai.azure.com/openai/deployments/o4-mini-4/chat/completions?api-version=2024-12-01-preview "HTTP/1.1 400 Bad Request"
+2025-06-05 10:01:16,798 - httpx - INFO - HTTP Request: POST https://mudit-43747337.openai.azure.com/openai/deployments/o4-mini-4/chat/completions?api-version=2024-12-01-preview "HTTP/1.1 200 OK"
+2025-06-05 10:16:07,945 - chromadb.telemetry.posthog - INFO - Anonymized telemetry enabled. See https://docs.trychroma.com/telemetry for more information.
+2025-06-05 10:16:07,989 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-06-05 10:16:08,786 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device: cpu
+2025-06-05 10:16:09,015 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 58f28f248a08560e05e3ada7250c9436
+2025-06-05 10:16:09,015 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 25e7edfba33ba3a0e068c31d5677d4d9
+2025-06-05 10:16:09,015 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 9ef22005e8ac5f62a334a4b7029d9718
+2025-06-05 10:16:09,015 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 3344a86e41b53f542b4a31f3317fe7f3
+2025-06-05 10:16:09,015 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: e154e45f4f9fbbf6059fa4a902748d7c
+2025-06-05 10:16:09,015 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 3369ab2c949165657c1fa34d48134d6a
+2025-06-05 10:16:09,015 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 58f28f248a08560e05e3ada7250c9436
+2025-06-05 10:16:09,015 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 25e7edfba33ba3a0e068c31d5677d4d9
+2025-06-05 10:16:09,015 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 9ef22005e8ac5f62a334a4b7029d9718
+2025-06-05 10:16:09,015 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 3344a86e41b53f542b4a31f3317fe7f3
+2025-06-05 10:16:09,015 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: e154e45f4f9fbbf6059fa4a902748d7c
+2025-06-05 10:16:09,015 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 3369ab2c949165657c1fa34d48134d6a
+2025-06-05 10:16:09,017 - chromadb.segment.impl.metadata.sqlite - WARNING - Insert of existing embedding ID: 58f28f248a08560e05e3ada7250c9436
+2025-06-05 10:16:09,017 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 58f28f248a08560e05e3ada7250c9436
+2025-06-05 10:16:09,044 - chromadb.segment.impl.metadata.sqlite - WARNING - Insert of existing embedding ID: 25e7edfba33ba3a0e068c31d5677d4d9
+2025-06-05 10:16:09,044 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 25e7edfba33ba3a0e068c31d5677d4d9
+2025-06-05 10:16:09,072 - chromadb.segment.impl.metadata.sqlite - WARNING - Insert of existing embedding ID: 9ef22005e8ac5f62a334a4b7029d9718
+2025-06-05 10:16:09,072 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 9ef22005e8ac5f62a334a4b7029d9718
+2025-06-05 10:16:09,102 - chromadb.segment.impl.metadata.sqlite - WARNING - Insert of existing embedding ID: 3344a86e41b53f542b4a31f3317fe7f3
+2025-06-05 10:16:09,102 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 3344a86e41b53f542b4a31f3317fe7f3
+2025-06-05 10:16:09,120 - chromadb.segment.impl.metadata.sqlite - WARNING - Insert of existing embedding ID: e154e45f4f9fbbf6059fa4a902748d7c
+2025-06-05 10:16:09,120 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: e154e45f4f9fbbf6059fa4a902748d7c
+2025-06-05 10:16:09,130 - chromadb.segment.impl.metadata.sqlite - WARNING - Insert of existing embedding ID: 3369ab2c949165657c1fa34d48134d6a
+2025-06-05 10:16:09,130 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Add of existing embedding ID: 3369ab2c949165657c1fa34d48134d6a
+2025-06-05 10:17:00,596 - httpx - INFO - HTTP Request: POST https://mudit-43747337.openai.azure.com/openai/deployments/o4-mini-4/chat/completions?api-version=2024-12-01-preview "HTTP/1.1 200 OK"
+2025-06-05 10:32:37,317 - httpx - INFO - HTTP Request: POST https://mudit-43747337.openai.azure.com/openai/deployments/o4-mini-4/chat/completions?api-version=2024-12-01-preview "HTTP/1.1 400 Bad Request"
+2025-06-05 10:32:45,452 - httpx - INFO - HTTP Request: POST https://mudit-43747337.openai.azure.com/openai/deployments/o4-mini-4/chat/completions?api-version=2024-12-01-preview "HTTP/1.1 200 OK"

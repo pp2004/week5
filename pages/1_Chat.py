@@ -116,9 +116,8 @@ def main():
     for message in st.session_state.chat_history:
         role = message["role"]
         content = message["content"]
-        # If your installed Streamlit ≥ 1.18, you can do st.chat_message(role)
-        # But if chat_message is missing, fallback to st.markdown:
         try:
+            # Preferred: modern Streamlit chat bubbles
             with st.chat_message(role):
                 st.write(content)
                 if role == "assistant" and message.get("has_context"):
@@ -142,12 +141,24 @@ def main():
         user_msg = {"role": "user", "content": prompt}
         st.session_state.chat_history.append(user_msg)
 
-        # Render the user message to the UI:
+        # Display the user’s message in the UI
         try:
             with st.chat_message("user"):
                 st.write(prompt)
         except AttributeError:
             st.markdown(f"**You:** {prompt}")
+
+        # --- LOG THE USER MESSAGE ---
+        log_message(
+            user_id=get_user_id(),
+            message_type="user",
+            content=prompt,
+            tokens_used=0,                      # user message itself does not consume tokens
+            model_name="n/a",                   # you can set to "n/a" or leave default
+            temperature=st.session_state.temperature,
+            max_tokens=st.session_state.max_tokens,
+            has_pdf_context=False
+        )
 
         # 2) Gather PDF context if available
         pdf_context = []
@@ -156,7 +167,6 @@ def main():
         has_pdf_context = len(pdf_context) > 0
 
         # 3) Call ask_gpt with the full session history + azure_config
-        #    We must MATCH the exact return signature from chat_engine.ask_gpt:
         try:
             response, tokens_used, success = ask_gpt(
                 st.session_state.chat_history,   # entire message history
@@ -192,10 +202,10 @@ def main():
 
             log_message(
                 user_id=get_user_id(),
-                prompt=prompt,
-                response=response,
+                message_type="assistant",
+                content=response,
                 tokens_used=tokens_used,
-                model_name="gpt-4o-mini",
+                model_name=azure_config["deployment_name"],
                 temperature=st.session_state.temperature,
                 max_tokens=st.session_state.max_tokens,
                 has_pdf_context=has_pdf_context
